@@ -1,105 +1,190 @@
-import React from 'react';
-import styled from 'styled-components/native';
-import { Button, Text, ImageBackground } from 'react-native';
-
-const mockWeatherData = {
-  coord: {
-    lon: 2.3488,
-    lat: 48.8534
-  },
-  weather: [
-    {
-      id: 804,
-      main: "Clouds",
-      description: "overcast clouds",
-      icon: "04n"
-    }
-  ],
-  main: {
-    temp: 16.16,
-    feels_like: 15.79,
-    temp_min: 15.21,
-    temp_max: 16.81,
-    pressure: 1016,
-    humidity: 75,
-    sea_level: 1016,
-    grnd_level: 1006
-  },
-  visibility: 10000,
-  wind: {
-    speed: 5.66,
-    deg: 320
-  },
-  clouds: {
-    all: 100
-  },
-  sys: {
-    type: 2,
-    id: 2012208,
-    country: "FR",
-    sunrise: 1719546575,
-    sunset: 1719604682
-  },
-  timezone: 7200,
-  id: 2988507,
-  name: "Paris",
-  cod: 200
-};
-
-const Container = styled.View`
-  flex: 1;
-  justify-content: center;
-  align-items: center;
-  background-color: #000
-`;
-
-const Title = styled.Text`
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 20px;
-  color: white;
-`;
+import React, { useEffect, useState } from "react";
+import styled from "styled-components/native";
+import {
+  ImageBackground,
+  Alert,
+  ScrollView,
+  Image,
+  Modal,
+  TouchableOpacity,
+} from "react-native";
+import {
+  Container,
+  CloseButtonText,
+  CloseButton,
+  ModalScrollView,
+  ModalTitle,
+  ModalView,
+  ModalContainer,
+  ForecastText,
+  ForecastItem,
+  ButtonText,
+  StyledButton,
+  WeatherInfoValue,
+  WeatherInfoLabel,
+  WeatherInfo,
+  Card,
+  SearchInput,
+  Title,
+  TopBar,
+} from "../Styles/weather";
+import { getBackgroundImage } from "../utils";
+// Replace with your actual API key from OpenWeatherMap
+const API_KEY = "f6a9ae79a864a96c889b51704f84715e";
 
 const WeatherDetailsScreen = ({ route, navigation }) => {
   const city = route?.params?.city;
-  const weatherData =  mockWeatherData 
+  const [cityName, setCityName] = useState("");
+  const [weatherData, setWeatherData] = useState(null);
+  const [forecastData, setForecastData] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
 
-  const getBackgroundImage = (weatherCondition) => {
-    switch (weatherCondition) {
-      case 'clear':
-        return 'https://example.com/clear.jpg';
-      case 'clouds':
-        return 'https://example.com/clouds.jpg';
-      case 'rain':
-        return 'https://example.com/rain.jpg';
-      case 'snow':
-        return 'https://example.com/snow.jpg';
-      default:
-        return 'https://example.com/default.jpg';
+  useEffect(() => {
+    if (city) {
+      setCityName(city);
+      fetchWeatherData(city);
+      fetchForecastData(city);
+    } else {
+      setCityName(city);
+      fetchWeatherData("new york");
+      fetchForecastData("new york");
+    }
+    return () => {
+      setCityName("");
+    };
+  }, [city]);
+
+  const fetchWeatherData = async (city) => {
+    try {
+      const response = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`
+      );
+      const data = await response.json();
+      if (response.ok) {
+        setWeatherData(data);
+      } else {
+        Alert.alert("Error", data.message);
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to fetch weather data");
     }
   };
 
-  const backgroundImage = getBackgroundImage(weatherData.weather[0].main.toLowerCase());
+  const fetchForecastData = async (city) => {
+    try {
+      const response = await fetch(
+        `https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${API_KEY}&units=metric`
+      );
+      const data = await response.json();
+      if (response.ok) {
+        setForecastData(data.list);
+      } else {
+        Alert.alert("Error", data.message);
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to fetch forecast data");
+    }
+  };
+
+  const handleSearch = () => {
+    if (cityName) {
+      fetchWeatherData(cityName);
+      fetchForecastData(cityName);
+    }
+  };
+
+  const backgroundImage = weatherData
+    ? getBackgroundImage(weatherData.weather[0].main)
+    : null;
+
+  const filteredForecastData = forecastData?.filter(
+    (item) => new Date(item.dt * 1000).getHours() === 2
+  );
 
   return (
     <ImageBackground source={{ uri: backgroundImage }} style={{ flex: 1 }}>
       <Container>
-        <Title>Weather Details for {city || ""}</Title>
-        {weatherData ? (
+        <TopBar>
+          <SearchInput
+            placeholder="Enter city name..."
+            placeholderTextColor="gray"
+            value={cityName}
+            onChangeText={setCityName}
+            onSubmitEditing={handleSearch}
+          />
+        </TopBar>
+        {weatherData && (
           <>
-            <Text style={{ color: 'white' }}>Temperature: {weatherData.main.temp}°C</Text>
-            <Text style={{ color: 'white' }}>Feels Like: {weatherData.main.feels_like}°C</Text>
-            <Text style={{ color: 'white' }}>Humidity: {weatherData.main.humidity}%</Text>
-            <Text style={{ color: 'white' }}>Wind Speed: {weatherData.wind.speed} m/s</Text>
+            <Title>Weather Details for {weatherData.name}</Title>
+            <Card>
+              <Image
+                style={{ width: "30%", height: "30%" }}
+                source={{
+                  uri: `http://openweathermap.org/img/wn/${weatherData.weather[0].icon}@2x.png`,
+                }}
+              />
+              <WeatherInfo>
+                <WeatherInfoLabel>Temperature:</WeatherInfoLabel>
+                <WeatherInfoValue>{weatherData.main.temp}°C</WeatherInfoValue>
+              </WeatherInfo>
+              <WeatherInfo>
+                <WeatherInfoLabel>Feels Like:</WeatherInfoLabel>
+                <WeatherInfoValue>
+                  {weatherData.main.feels_like}°C
+                </WeatherInfoValue>
+              </WeatherInfo>
+              <WeatherInfo>
+                <WeatherInfoLabel>Humidity:</WeatherInfoLabel>
+                <WeatherInfoValue>
+                  {weatherData.main.humidity}%
+                </WeatherInfoValue>
+              </WeatherInfo>
+              <WeatherInfo>
+                <WeatherInfoLabel>Wind Speed:</WeatherInfoLabel>
+                <WeatherInfoValue>
+                  {weatherData.wind.speed} m/s
+                </WeatherInfoValue>
+              </WeatherInfo>
+              <StyledButton onPress={() => setModalVisible(true)}>
+                <ButtonText>See 5-Day Forecast</ButtonText>
+              </StyledButton>
+            </Card>
           </>
-        ) : (
-          <Text style={{ color: 'white' }}>No Data Available</Text>
         )}
-        <Button
-          title="Go Back"
-          onPress={() => navigation.goBack()}
-        />
       </Container>
+
+      {/* Modal for 5-Day Forecast */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <ModalContainer>
+          <ModalView>
+            <ModalTitle>5-Day Forecast</ModalTitle>
+            <ModalScrollView>
+              {filteredForecastData?.map((item, index) => (
+                <ForecastItem key={index}>
+                  <ForecastText>
+                    Date: {new Date(item.dt * 1000).toLocaleDateString()}
+                  </ForecastText>
+                  <ForecastText>
+                    Time: {new Date(item.dt * 1000).toLocaleTimeString()}
+                  </ForecastText>
+                  <ForecastText>Temperature: {item.main.temp}°C</ForecastText>
+                  <ForecastText>
+                    Weather: {item.weather[0].description}
+                  </ForecastText>
+                </ForecastItem>
+              ))}
+            </ModalScrollView>
+            <CloseButton onPress={() => setModalVisible(false)}>
+              <CloseButtonText>Close</CloseButtonText>
+            </CloseButton>
+          </ModalView>
+        </ModalContainer>
+      </Modal>
     </ImageBackground>
   );
 };

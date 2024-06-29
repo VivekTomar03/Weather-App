@@ -1,6 +1,4 @@
-Sure! Here's an updated `README.md` file that includes an Acknowledgment section:
-
-```markdown
+```
 # Weather App
 
 A weather application built using React Native Expo that provides current weather details and a 5-day forecast for any city. The app features dynamic background images based on the weather conditions and a modal to display the forecast.

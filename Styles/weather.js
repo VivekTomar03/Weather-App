@@ -1,3 +1,4 @@
+import { Platform } from "react-native";
 import styled from "styled-components/native";
 
 const Container = styled.View`
@@ -38,7 +39,7 @@ const Card = styled.View`
   shadow-offset: 0px 0px;
   shadow-opacity: 0.3;
   shadow-radius: 5px;
-  height: auto;
+  height: ${Platform.OS ==="web" ? "100%":"auto"};
 `;
 
 const WeatherInfo = styled.View`
@@ -54,11 +55,14 @@ const WeatherInfoLabel = styled.Text`
   color: black;
   font-size: 18px;
   margin-bottom: 5px;
+  font-weight: bold;
 `;
 
 const WeatherInfoValue = styled.Text`
   color: white;
-  font-size: 16px;
+  font-size: 18px;
+  font-weight: bold;
+ color : ${(props) => props.color || 'lightgrey'};
 `;
 
 const StyledButton = styled.TouchableOpacity`

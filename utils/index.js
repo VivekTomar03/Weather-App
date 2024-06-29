@@ -10,6 +10,21 @@ export const getBackgroundImage = (weatherCondition) => {
       case "Snow":
         return "https://i.pinimg.com/originals/45/65/44/456544b89487d793d72f8eb9f69b6188.gif";
       default:
-        return "https://example.com/default.jpg";
+        return "https://i.pinimg.com/564x/15/6b/9a/156b9ac15b20f094ea0d687e59103490.jpg";
+    }
+  };
+
+  export const getDetailsColor = (color) => {
+    switch (color) {
+      case "Clear":
+        return "#CB8500";
+      case "Clouds":
+        return "#462901";
+      case "Rain":
+        return "green";
+      case "Snow":
+        return "blue";
+      default:
+        return "black";
     }
   };
